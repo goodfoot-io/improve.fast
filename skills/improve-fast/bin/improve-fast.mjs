@@ -277,11 +277,10 @@ async function cmdInit(args, flags, apiUrl) {
     [
       `experimentId: ${data.experimentId}`,
       `variants: ${data.variants.join(', ')}`,
-      `expiresAt: ${formatTimestamp(data.expiresAt)}`,
-      '',
-      `Next: improve-fast select ${data.experimentId}`
+      `expiresAt: ${formatTimestamp(data.expiresAt)}`
     ].join('\n') + '\n'
   );
+  process.stderr.write(`Next: improve-fast select ${data.experimentId}\n`);
 }
 
 async function cmdSelect(args, flags, apiUrl) {
@@ -297,9 +296,11 @@ async function cmdSelect(args, flags, apiUrl) {
     return;
   }
 
-  process.stdout.write(
-    `${data.variant}\n` +
-      `(after using this variant: improve-fast record ${experimentId} "${data.variant}" <score>)\n`
+  // Only the variant name goes to stdout, so `$(improve-fast select <id>)` is
+  // safe to capture and feed directly into `record`. Guidance goes to stderr.
+  process.stdout.write(`${data.variant}\n`);
+  process.stderr.write(
+    `(after using this variant: improve-fast record ${experimentId} "${data.variant}" <score>)\n`
   );
 }
 
@@ -330,15 +331,15 @@ async function cmdRecord(args, flags, apiUrl) {
     `progress: ${formatPercent(data.progress)}`
   ];
   if (data.winner) {
-    lines.push('', `Converged. ${formatWinner(data.winner)}`);
+    lines.push(`Converged. ${formatWinner(data.winner)}`);
   } else {
-    lines.push(
-      `estimatedRemainingEvaluations: ${data.estimatedRemainingEvaluations}`,
-      '',
-      `Next: improve-fast select ${experimentId}`
-    );
+    lines.push(`estimatedRemainingEvaluations: ${data.estimatedRemainingEvaluations}`);
   }
   process.stdout.write(lines.join('\n') + '\n');
+
+  if (!data.winner) {
+    process.stderr.write(`Next: improve-fast select ${experimentId}\n`);
+  }
 }
 
 async function cmdStatus(args, flags, apiUrl) {
@@ -371,10 +372,12 @@ async function cmdStatus(args, flags, apiUrl) {
   }
   if (data.winner) {
     lines.push('', formatWinner(data.winner));
-  } else {
-    lines.push('', `Next: improve-fast select ${experimentId}`);
   }
   process.stdout.write(lines.join('\n') + '\n');
+
+  if (!data.winner) {
+    process.stderr.write(`Next: improve-fast select ${experimentId}\n`);
+  }
 }
 
 async function main() {

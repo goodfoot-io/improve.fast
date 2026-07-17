@@ -26,8 +26,12 @@ environment, call the REST API directly — see `reference/api.md`.
    ```
    improve-fast select <experimentId>
    ```
-   Prints just the variant name. This is read-only and can return a different variant each call
-   even with no new data — that's intentional (see `reference/methodology.md`).
+   Human-mode stdout is the variant name and nothing else (a usage hint is printed to stderr, not
+   stdout), so `VARIANT=$(improve-fast select <experimentId>)` captures a clean value. This is
+   read-only and can return a different variant each call even with no new data — that's
+   intentional (see `reference/methodology.md`). When scripting or capturing output
+   programmatically, prefer `--json` and read the `.variant` field instead of relying on stdout
+   formatting, e.g. `improve-fast select <experimentId> --json`.
 
 3. **Do the task** using that variant (e.g. actually use that prompt phrasing to produce output).
 
@@ -36,7 +40,8 @@ environment, call the REST API directly — see `reference/api.md`.
    improve-fast record <experimentId> "friendly tone" 0.8
    ```
    Pick one scoring rubric per experiment and apply it consistently across variants — see the
-   scoring guidance below.
+   scoring guidance below. As with `select`, add `--json` if you need to parse the response
+   programmatically rather than scrape human-readable text.
 
 5. **Repeat steps 2–4.** After each `record`, check the response (or run `status`) for
    `converged: true` / a non-null `winner`. Stop looping once converged; report the winner. If
